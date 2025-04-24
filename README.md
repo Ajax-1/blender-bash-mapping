@@ -11,6 +11,7 @@ A Python script for applying multiple textures to a 3D model from different came
 - 📝 Detailed logging for debugging
 - ⚙️ Flexible JSON configuration
 - 📦 Export to GLB format
+- 🔄 **NEW**: Batch processing mode for handling multiple files
 
 ## Requirements
 
@@ -29,23 +30,45 @@ cd blender-multi-camera-texture-mapper
 
 ## Usage
 
-### Basic Command
+### Single File Mode
+
+```bash
+blender --background --python blender_mapper.py -- --single --input input.ply --config config.json --output output.glb
+```
+
+Or use the traditional positional arguments (for backward compatibility):
 
 ```bash
 blender --background --python blender_mapper.py -- input.ply config.json output.glb
 ```
 
+### Batch Processing Mode
+
+```bash
+blender --background --python blender_mapper.py -- --batch --input-dir /path/to/ply/files --config config.json --output-dir /path/to/output/folder
+```
+
 ### Advanced Options
 
 ```bash
-blender --background --python blender_mapper.py -- input.ply config.json output.glb --verbose --log processing.log
+blender --background --python blender_mapper.py -- --batch --input-dir ./models --config config.json --output-dir ./output --verbose --log processing.log
 ```
 
 ### Parameters
 
-- `input.ply`: Path to the input 3D model in PLY format
-- `config.json`: Path to the camera configuration file
-- `output.glb`: Path for the output GLB file
+#### Single File Mode
+- `--single`: Enable single file mode (default)
+- `--input`: Path to the input 3D model in PLY format
+- `--config`: Path to the camera configuration file
+- `--output`: Path for the output GLB file
+
+#### Batch Processing Mode
+- `--batch`: Enable batch processing mode
+- `--input-dir`: Directory containing input PLY files
+- `--output-dir`: Directory for output GLB files
+- `--config`: Path to the camera configuration file (shared for all models)
+
+#### Common Options
 - `--verbose`: Enable detailed logging
 - `--log`: Specify a log file path
 
@@ -112,40 +135,33 @@ The script includes common camera viewpoints for standard orientations:
 | Left      | [-14, 0, 1.3] | Looking at the model from the left side |
 | Bottom    | [0, 0, -16] | Looking up at the model |
 
+## Batch Processing
+
+The batch processing mode will:
+
+1. Scan the input directory for all `.ply` files
+2. Process each file with the same camera configuration
+3. Create corresponding `.glb` files in the output directory
+4. Maintain the original filenames (with `.glb` extension)
+5. Log the progress and results
+
+This is ideal for processing multiple models with the same texture mapping configuration.
+
 ## Examples
 
-### Example 1: Top and Side Textures
+### Example 1: Single File Processing
 
-```json
-[
-  {
-    "name": "Camera_Top",
-    "location": [0, 0, 16],
-    "rotation": [0, 0, 1.5708],
-    "selection_params": {
-      "type": "max_coord",
-      "coord": 2,
-      "normal_direction": 1
-    },
-    "material_index": 0,
-    "texture_path": "./textures/top_view.png"
-  },
-  {
-    "name": "Camera_Side",
-    "location": [14, 0, 1.3],
-    "rotation": [1.5708, 0, 1.5708],
-    "selection_params": {
-      "type": "max_coord",
-      "coord": 0,
-      "normal_direction": 1
-    },
-    "material_index": 1,
-    "texture_path": "./textures/side_view.png"
-  }
-]
+```bash
+blender --background --python blender_mapper.py -- --single --input model.ply --config cameras.json --output model.glb
 ```
 
-### Example 2: Six-sided Cube Mapping
+### Example 2: Batch Processing Multiple Models
+
+```bash
+blender --background --python blender_mapper.py -- --batch --input-dir ./raw_models --config cameras.json --output-dir ./processed_models --verbose
+```
+
+### Example 3: Six-sided Cube Mapping Configuration
 
 ```json
 [
@@ -231,13 +247,14 @@ The script includes common camera viewpoints for standard orientations:
 1. **No faces selected**: Adjust the `epsilon` and `normal_direction` parameters
 2. **Texture not visible**: Check texture file path and material assignment
 3. **Distorted UVs**: Adjust camera position and rotation
+4. **Memory issues in batch mode**: If processing large models, you may need to increase Blender's memory allocation
 
 ### Debug with Logging
 
 Use the `--verbose` and `--log` options to get detailed information:
 
 ```bash
-blender --background --python blender_mapper.py -- input.ply config.json output.glb --verbose --log debug.log
+blender --background --python blender_mapper.py -- --batch --input-dir ./models --config config.json --output-dir ./output --verbose --log debug.log
 ```
 
 ## License
